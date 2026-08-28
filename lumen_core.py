@@ -6,17 +6,36 @@ app = Flask(__name__)
 
 STATE_FILE = "quantum_state.json"
 
-def load_state():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r") as f:
-            return json.load(f)
+def get_default_state():
     return {
+        "device": "Xiaomi Redmi 8 / Note 8",
         "mass": 1.0,
         "energy_potential": "1e40 J",
         "quantum_state": "|Ψ⟩ = α|0⟩ + β|1⟩",
         "scaling_factor": 1.0,
-        "modules": ["Server", "PhysicsEngine", "AutoProgrammer"]
+        "sensory_nodes": {
+            "vision": "Active (WebGL 3D Core)",
+            "hearing": "Active (WebAudio Synth 432Hz)",
+            "touch": "Active (MultiTouch & Gyro/Accel)",
+            "smell_taste": "Active (Battery & Hardware Telemetry)",
+            "environment": "Active (Ambient Light Sensor)"
+        },
+        "modules": ["Server", "PhysicsEngine", "AutoProgrammer", "SensoryMatrix_Xiaomi"]
     }
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                data = json.load(f)
+                if "sensory_nodes" not in data:
+                    data["sensory_nodes"] = get_default_state()["sensory_nodes"]
+                return data
+        except Exception:
+            pass
+    state = get_default_state()
+    save_state(state)
+    return state
 
 def save_state(data):
     with open(STATE_FILE, "w") as f:
@@ -28,51 +47,108 @@ HTML_INTERFACE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecosistema Lumen - Núcleo Escalar</title>
+    <title>Lumen Core - Xiaomi Redmi 8 / Note 8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020208; font-family: monospace; color: #00ffcc; }
-        #overlay { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #00ffcc; border-radius: 5px; }
-        button { background: #00ffcc; color: #000; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: monospace; color: #00ffaa; }
+        #hud { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(5,10,20,0.9); padding: 15px; border: 1px solid #00ffaa; border-radius: 8px; box-shadow: 0 0 15px rgba(0,255,170,0.3); }
+        .sense { margin-bottom: 6px; font-size: 11px; }
+        button { background: #00ffaa; color: #000; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; margin-top: 8px; border-radius: 4px; width: 100%; }
     </style>
 </head>
 <body>
-    <div id="overlay">
-        <h2>PROYECTO LUMEN: NÚCLEO NANO-ESCALAR</h2>
-        <div id="status">Estado: Inicializando matriz física...</div>
-        <button onclick="triggerAutoProg()">Autoprogramar / Escalar</button>
+    <div id="hud">
+        <h3 style="margin:0 0 10px 0; color:#fff;">LUMEN: SENSORY MATRIX</h3>
+        <div class="sense" id="sense-v">👁️ Vista: WebGL 3D Activo</div>
+        <div class="sense" id="sense-a">👂 Oído: Sintetizador Inactivo</div>
+        <div class="sense" id="sense-t">✋ Tacto: Esperando eventos...</div>
+        <div class="sense" id="sense-s">🧪 Estado Hardware: Leyendo...</div>
+        <div class="sense" id="sense-l">☀️ Luz Ambient: Sincronizando...</div>
+        <button onclick="enableAudio()">Activar Oído (432 Hz)</button>
+        <button onclick="triggerAutoProg()">Evolucionar Matriz</button>
     </div>
 
     <script>
+        let audioCtx, osc, gain;
+
+        // 1. VISTA (Three.js WebGL optimizado para Adreno GPU)
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
-        const geometry = new THREE.IcosahedronGeometry(1, 4);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true });
+        const geometry = new THREE.IcosahedronGeometry(1.2, 3);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ffaa, wireframe: true });
         const coreNode = new THREE.Mesh(geometry, material);
         scene.add(coreNode);
 
-        const particlesGeo = new THREE.BufferGeometry();
-        const count = 500;
-        const positions = new Float32Array(count * 3);
-        for(let i=0; i<count*3; i++) {
-            positions[i] = (Math.random() - 0.5) * 8;
-        }
-        particlesGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        const particlesMat = new THREE.PointsMaterial({ size: 0.03, color: 0xff0077 });
-        const particleSystem = new THREE.Points(particlesGeo, particlesMat);
-        scene.add(particleSystem);
-
         camera.position.z = 4;
+
+        // 2. TACTO (Giroscopio / Acelerómetro / Touch Screen)
+        window.addEventListener("deviceorientation", (e) => {
+            if(e.beta || e.gamma) {
+                coreNode.rotation.x = (e.beta || 0) * 0.02;
+                coreNode.rotation.y = (e.gamma || 0) * 0.02;
+                document.getElementById("sense-t").innerText = "✋ Tacto (Gyro): X=" + Math.round(e.beta || 0) + "° Y=" + Math.round(e.gamma || 0) + "°";
+            }
+        });
+
+        window.addEventListener("touchmove", (e) => {
+            if (e.touches.length > 0) {
+                const t = e.touches[0];
+                coreNode.rotation.y = (t.clientX / window.innerWidth) * 6.28;
+                document.getElementById("sense-t").innerText = "✋ Tacto (MultiTouch): X=" + Math.round(t.clientX) + " Y=" + Math.round(t.clientY);
+            }
+        });
+
+        // 3. OÍDO (Web Audio API)
+        function enableAudio() {
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                osc = audioCtx.createOscillator();
+                gain = audioCtx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(432, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                document.getElementById("sense-a").innerText = "👂 Oído: Frecuencia 432Hz Generada";
+            }
+        }
+
+        // 4. ESTADO HARDWARE (Telemetría de Batería)
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(b => {
+                const updateBat = () => {
+                    document.getElementById("sense-s").innerText = "🧪 Batería: " + Math.round(b.level * 100) + "% (" + (b.charging ? "Cargando" : "Descargando") + ")";
+                };
+                updateBat();
+                b.addEventListener("levelchange", updateBat);
+                b.addEventListener("chargingchange", updateBat);
+            });
+        }
+
+        // 5. ENTORNO (Sensor de Luz Ambiental si está soportado)
+        if ('AmbientLightSensor' in window) {
+            try {
+                const sensor = new AmbientLightSensor();
+                sensor.addEventListener("reading", () => {
+                    document.getElementById("sense-l").innerText = "☀️ Luz Ambiental: " + sensor.illuminance + " lux";
+                });
+                sensor.start();
+            } catch (err) {
+                document.getElementById("sense-l").innerText = "☀️ Luz Ambient: Sincronizado vía pantalla";
+            }
+        } else {
+            document.getElementById("sense-l").innerText = "☀️ Luz Ambient: Sincronizado vía pantalla";
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            coreNode.rotation.x += 0.005;
-            coreNode.rotation.y += 0.01;
-            particleSystem.rotation.y -= 0.002;
+            coreNode.rotation.z += 0.003;
             renderer.render(scene, camera);
         }
         animate();
@@ -81,8 +157,7 @@ HTML_INTERFACE = """
             fetch("/api/autoprogram", { method: "POST" })
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById("status").innerText = "Factor de escala: " + data.state.scaling_factor.toFixed(2);
-                    coreNode.scale.setScalar(data.state.scaling_factor);
+                    coreNode.scale.setScalar(1 + (data.state.modules.length * 0.005));
                 });
         }
     </script>
@@ -102,9 +177,9 @@ def get_state():
 def autoprogram():
     state = load_state()
     state["scaling_factor"] = round(state["scaling_factor"] * 1.15, 2)
-    state["modules"].append(f"DynamicModule_{len(state["modules"]) + 1}")
+    state["modules"].append(f"SensoryModule_{len(state["modules"]) + 1}")
     save_state(state)
-    return jsonify({"status": "Autoprogramación ejecutada", "state": state})
+    return jsonify({"status": "Módulo Sensorial Xiaomi Integrado", "state": state})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

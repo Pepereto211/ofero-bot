@@ -2,7 +2,7 @@
     "mass": 1.0,
     "energy_potential": "1e40 J",
     "quantum_state": "|\u03a8\u27e9 = \u03b1|0\u27e9 + \u03b2|1\u27e9",
-    "scaling_factor": 1.1445986175891622e+19,
+    "scaling_factor": 1.5137316717616669e+19,
     "modules": [
         "Server",
         "PhysicsEngine",
@@ -320,7 +320,9 @@
         "SensoryModule_314",
         "SensoryModule_315",
         "SensoryModule_316",
-        "SensoryModule_317"
+        "SensoryModule_317",
+        "SensoryModule_318",
+        "SensoryModule_319"
     ],
     "sensory_nodes": {
         "vision": "Active (WebGL 3D Core)",
