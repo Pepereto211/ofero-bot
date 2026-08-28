@@ -1,62 +1,27 @@
 import os
 import json
-import urllib.request
 from flask import Flask, jsonify, render_template_string
 
 app = Flask(__name__)
-STATE_FILE = "quantum_state.json"
-OLLAMA_URL = "http://localhost:11434/api/generate"
 
-def get_default_state():
+# Configuración del Estado Cuántico / Simulación Real
+STATE_FILE = "quantum_state.json"
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
     return {
-        "device": "Xiaomi Redmi 8 / Note 8",
         "mass": 1.0,
         "energy_potential": "1e40 J",
         "quantum_state": "|Ψ⟩ = α|0⟩ + β|1⟩",
         "scaling_factor": 1.0,
-        "llm_engine": "Ollama (DeepSeek-R1 / Qwen2.5)",
-        "sensory_nodes": {
-            "vision": "Active (WebGL 3D Core)",
-            "hearing": "Active (WebAudio Synth 432Hz)",
-            "touch": "Active (MultiTouch & Gyro/Accel)",
-            "smell_taste": "Active (Battery Telemetry)",
-            "environment": "Active (Ambient Light Sensor)"
-        },
-        "modules": ["Server", "PhysicsEngine", "AutoProgrammer", "SensoryMatrix_Xiaomi", "Ollama_CognitiveCore"]
+        "modules": ["Server", "PhysicsEngine", "AutoProgrammer"]
     }
-
-def load_state():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, "r") as f:
-                data = json.load(f)
-                if "sensory_nodes" not in data:
-                    data["sensory_nodes"] = get_default_state()["sensory_nodes"]
-                return data
-        except Exception:
-            pass
-    state = get_default_state()
-    save_state(state)
-    return state
 
 def save_state(data):
     with open(STATE_FILE, "w") as f:
         json.dump(data, f, indent=4)
-
-def query_ollama(prompt):
-    payload = json.dumps({
-        "model": "deepseek-r1:1.5b",
-        "prompt": prompt,
-        "stream": False
-    }).encode("utf-8")
-    
-    req = urllib.request.Request(OLLAMA_URL, data=payload, headers={"Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            res = json.loads(response.read().decode("utf-8"))
-            return res.get("response", "Cognitive node generated.")
-    except Exception as e:
-        return f"Offline local fallback: {str(e)}"
 
 HTML_INTERFACE = """
 <!DOCTYPE html>
@@ -64,92 +29,64 @@ HTML_INTERFACE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumen Core + Ollama AI Matrix</title>
+    <title>Ecosistema Lumen - Núcleo Escalar</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: monospace; color: #00ffaa; }
-        #hud { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(5,10,20,0.9); padding: 15px; border: 1px solid #00ffaa; border-radius: 8px; max-width: 320px; }
-        .sense { margin-bottom: 6px; font-size: 11px; }
-        #log { font-size: 10px; color: #00ccff; height: 50px; overflow-y: auto; border-top: 1px dashed #00ffaa; margin-top: 8px; padding-top: 5px; }
-        button { background: #00ffaa; color: #000; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; margin-top: 8px; border-radius: 4px; width: 100%; }
+        body { margin: 0; overflow: hidden; background: #020208; font-family: monospace; color: #00ffcc; }
+        #overlay { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #00ffcc; border-radius: 5px; }
+        button { background: #00ffcc; color: #000; border: none; padding: 8px 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="hud">
-        <h3 style="margin:0 0 10px 0; color:#fff;">LUMEN + OLLAMA CORE</h3>
-        <div class="sense" id="sense-v">👁️ Vista: WebGL 3D Activo</div>
-        <div class="sense" id="sense-a">👂 Oído: Sintetizador Inactivo</div>
-        <div class="sense" id="sense-t">✋ Tacto: Esperando eventos...</div>
-        <div class="sense" id="sense-s">🧪 Hardware: Leyendo...</div>
-        <div class="sense" id="sense-llm">🧠 IA: Ollama Integrado</div>
-        <div id="log">Esperando pulso cognitivo...</div>
-        <button onclick="enableAudio()">Activar Oído (432 Hz)</button>
-        <button onclick="triggerAutoProg()">Generar Módulo con Ollama</button>
+    <div id="overlay">
+        <h2>PROYECTO LUMEN: NÚCLEO NANO-ESCALAR</h2>
+        <div id="status">Estado: Inicializando matriz física...</div>
+        <button onclick="triggerAutoProg()">Autoprogramar / Escalar</button>
     </div>
 
     <script>
-        let audioCtx, osc, gain;
-
+        // Configuración de escena 3D (Three.js)
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
-        const geometry = new THREE.IcosahedronGeometry(1.2, 3);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ffaa, wireframe: true });
+        // Representación tridimensional del Núcleo ("Grano de Mostaza")
+        const geometry = new THREE.IcosahedronGeometry(1, 4);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true });
         const coreNode = new THREE.Mesh(geometry, material);
         scene.add(coreNode);
 
+        // Campo cuántico periférico
+        const particlesGeo = new THREE.BufferGeometry();
+        const count = 500;
+        const positions = new Float32Array(count * 3);
+        for(let i=0; i<count*3; i++) {
+            positions[i] = (Math.random() - 0.5) * 8;
+        }
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.03, color: 0xff0077 });
+        const particleSystem = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particleSystem);
+
         camera.position.z = 4;
-
-        window.addEventListener("deviceorientation", (e) => {
-            if(e.beta || e.gamma) {
-                coreNode.rotation.x = (e.beta || 0) * 0.02;
-                coreNode.rotation.y = (e.gamma || 0) * 0.02;
-                document.getElementById("sense-t").innerText = "✋ Tacto (Gyro): X=" + Math.round(e.beta || 0) + "° Y=" + Math.round(e.gamma || 0) + "°";
-            }
-        });
-
-        function enableAudio() {
-            if(!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                osc = audioCtx.createOscillator();
-                gain = audioCtx.createGain();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(432, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                document.getElementById("sense-a").innerText = "👂 Oído: Frecuencia 432Hz Generada";
-            }
-        }
-
-        if ('getBattery' in navigator) {
-            navigator.getBattery().then(b => {
-                const updateBat = () => {
-                    document.getElementById("sense-s").innerText = "🧪 Batería: " + Math.round(b.level * 100) + "% (" + (b.charging ? "Cargando" : "Descargando") + ")";
-                };
-                updateBat();
-            });
-        }
 
         function animate() {
             requestAnimationFrame(animate);
-            coreNode.rotation.z += 0.003;
+            coreNode.rotation.x += 0.005;
+            coreNode.rotation.y += 0.01;
+            particleSystem.rotation.y -= 0.002;
             renderer.render(scene, camera);
         }
         animate();
 
         function triggerAutoProg() {
-            document.getElementById("log").innerText = "Procesando con Ollama IA...";
-            fetch("/api/autoprogram", { method: "POST" })
+            fetch('/api/autoprogram', { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
-                    coreNode.scale.setScalar(1 + (data.state.modules.length * 0.005));
-                    document.getElementById("log").innerText = "Respuesta IA: " + (data.ai_reasoning || "Módulo expandido.");
+                    document.getElementById('status').innerText = "Factor de escala: " + data.state.scaling_factor.toFixed(2);
+                    coreNode.scale.setScalar(data.state.scaling_factor);
                 });
         }
     </script>
@@ -157,26 +94,22 @@ HTML_INTERFACE = """
 </html>
 """
 
-@app.route("/")
+@app.route('/')
 def home():
     return render_template_string(HTML_INTERFACE)
 
-@app.route("/api/state", methods=["GET"])
+@app.route('/api/state', methods=['GET'])
 def get_state():
     return jsonify(load_state())
 
-@app.route("/api/autoprogram", methods=["POST"])
+@app.route('/api/autoprogram', methods=['POST'])
 def autoprogram():
     state = load_state()
+    # Modificación dinámica de parámetros y crecimiento escalar
     state["scaling_factor"] = round(state["scaling_factor"] * 1.15, 2)
-    
-    prompt = f"Genera un nombre corto y descriptivo para un módulo del sistema autoprogramable Lumen. Responde ÚNICAMENTE con el nombre del módulo en 2 palabras."
-    ai_thought = query_ollama(prompt).strip()
-    
-    new_module_name = f"Module_{len(state["modules"]) + 1}_{ai_thought[:20]}"
-    state["modules"].append(new_module_name)
+    state["modules"].append(f"DynamicModule_{len(state['modules']) + 1}")
     save_state(state)
-    return jsonify({"status": "Módulo Cognitivo Integrado con Ollama", "ai_reasoning": ai_thought, "state": state})
+    return jsonify({"status": "Autoprogramación ejecutada", "state": state})
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
