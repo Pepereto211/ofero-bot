@@ -2,7 +2,7 @@
     "mass": 1.0,
     "energy_potential": "1e40 J",
     "quantum_state": "|\u03a8\u27e9 = \u03b1|0\u27e9 + \u03b2|1\u27e9",
-    "scaling_factor": 4.549861617342983e+34,
+    "scaling_factor": 4.2575880042152e+35,
     "modules": [
         "Server",
         "PhysicsEngine",
@@ -577,7 +577,23 @@
         "Module_571_Offline local fallba",
         "Module_572_Offline local fallba",
         "Module_573_Offline local fallba",
-        "Module_574_Offline local fallba"
+        "Module_574_Offline local fallba",
+        "Module_575_Offline local fallba",
+        "Module_576_Offline local fallba",
+        "Module_577_Offline local fallba",
+        "Module_578_Offline local fallba",
+        "Module_579_Offline local fallba",
+        "Module_580_Offline local fallba",
+        "Module_581_Offline local fallba",
+        "Module_582_Offline local fallba",
+        "Module_583_Offline local fallba",
+        "Module_584_Offline local fallba",
+        "Module_585_Offline local fallba",
+        "Module_586_Offline local fallba",
+        "Module_587_Offline local fallba",
+        "Module_588_Offline local fallba",
+        "Module_589_Offline local fallba",
+        "Module_590_Offline local fallba"
     ],
     "sensory_nodes": {
         "vision": "Active (WebGL 3D Core)",
